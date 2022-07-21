@@ -27,9 +27,7 @@ public class Generator {
     private int maxCommission = 30;
     private final ZoneId zoneId = ZoneId.systemDefault();
     private final Random random = new Random();
-
     private int maxOutputsAmount = 5; // todo: needs to be set by user. or make generation process with config only
-
     private ArrayList<BitcoinTxNode> currentLayerTxs = new ArrayList<>();
     private ArrayList<BitcoinTxNode> prevLayerTxs = new ArrayList<>();
 
@@ -161,7 +159,7 @@ public class Generator {
                 && (minCommission <= commission && commission <= maxCommission)) {
             // Deque<Long> expandedToMixBtc = expandBtcToPowersOfTwo(toMixBtcAmount, commission);
             // expandedToMixBtc.forEach(System.out::println);
-
+            ArrayList<BitcoinAddressNode> enterSupportNodes = new ArrayList<>();
             int supportNodesAmount = 10; // per layer
             int layersAmount = 3;
             for (int layer = 0; layer < layersAmount; ++layer) {
@@ -169,6 +167,7 @@ public class Generator {
                 BitcoinAddressNode fromAddress;
                 try {
                     fromAddress = new BitcoinAddressNode("support_btc_address_0", 0, Utils.generateBtcAddress());
+                    enterSupportNodes.add(fromAddress);
                     currentSupportAddresses.add(fromAddress);
                 } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | UnsupportedEncodingException |
                          NoSuchProviderException e) {
@@ -202,6 +201,34 @@ public class Generator {
                 supportNodesAmount /= 2;
             }
 
+            try {
+                BitcoinAddressNode startNode = new BitcoinAddressNode(null, 0, Utils.generateBtcAddress());
+                BitcoinTxNode startTx = new BitcoinTxNode("start_tx_from_" + startNode.get_key(), getLocalTime());
+                BitcoinOutputEdge startInput = new BitcoinOutputEdge(
+                        startTx.get_key() + "_0",
+                        btcAddress + startNode.get_key(),
+                        btcTx + startTx.get_key(),
+                        0,
+                        null,
+                        getLocalTime());
+                addressNodes.put(startNode.get_key(), startNode);
+                transactionNodes.put(startTx.get_key(), startTx);
+                inOutEdges.put(startInput.get_key(), startInput);
+                for (int j = 0; j < enterSupportNodes.size(); ++j) {
+                    BitcoinOutputEdge outputEdge = new BitcoinOutputEdge(
+                            startTx.get_key() + "_0",
+                            btcTx + startTx.get_key(),
+                            btcAddress + enterSupportNodes.get(j).get_key(),
+                            j,
+                            null,
+                            getLocalTime()
+                    );
+                    inOutEdges.put(outputEdge.get_key(), outputEdge);
+                }
+            } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | UnsupportedEncodingException |
+                     NoSuchProviderException e) {
+                throw new RuntimeException(e);
+            }
         } else throw new IllegalArgumentException();
 
         blockNode = new BitcoinBlockNode(
@@ -221,11 +248,9 @@ public class Generator {
 
             i++;
         }
-
-
     }
 
-    private <K, V> void writeDown(Map<K, V> data, String folder) {
+    private <K, V> void writeDownHashMapData(Map<K, V> data, String folder) {
         for (var entry: data.entrySet()) {
             try (FileOutputStream fos = new FileOutputStream( folder + entry.getKey() + ".dat");
                  ObjectOutputStream oos = new ObjectOutputStream(fos)) {
@@ -237,36 +262,27 @@ public class Generator {
     }
 
     public void writeAll() {
-        ArrayList<String> foldersToCreate = new ArrayList<>();
+        ArrayList<String> folderNames = new ArrayList<>(
+                Arrays.asList(
+                        "transactions",
+                        "addresses",
+                        "inoutedges",
+                        "blockedges",
+                        "blocknodes"));
 
-        File transactions = new File("./src/main/resources/transactions");
-        if (!transactions.exists()) {
-            transactions.mkdir();
+        String path = "./src/main/resources/";
+        for (String folderName: folderNames) {
+            File folder = new File(path + folderName);
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
         }
-        writeDown(transactionNodes, "./src/main/resources/transactions/");
 
-        File addresses = new File("./src/main/resources/addresses");
-        if (!addresses.exists()) {
-            addresses.mkdir();
-        }
-        writeDown(addressNodes, "./src/main/resources/addresses/");
+        writeDownHashMapData(transactionNodes, "./src/main/resources/transactions/");
+        writeDownHashMapData(addressNodes, "./src/main/resources/addresses/");
+        writeDownHashMapData(inOutEdges, "./src/main/resources/inoutedges/");
+        writeDownHashMapData(blockEdges, "./src/main/resources/blockedges/");
 
-        File inoutedges = new File("./src/main/resources/inoutedges");
-        if (!inoutedges.exists()) {
-            inoutedges.mkdir();
-        }
-        writeDown(inOutEdges, "./src/main/resources/inoutedges/");
-
-        File blockedges = new File("./src/main/resources/blockedges");
-        if (!blockedges.exists()) {
-            blockedges.mkdir();
-        }
-        writeDown(blockEdges, "./src/main/resources/blockedges/");
-
-        File blocknodes = new File("./src/main/resources/blocknodes");
-        if (!blocknodes.exists()) {
-            blocknodes.mkdir();
-        }
         try (FileOutputStream fos = new FileOutputStream( "./src/main/resources/blocknodes/" + blockNode.get_key() +  ".dat");
              ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             oos.writeObject(blockNode);
