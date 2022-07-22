@@ -27,6 +27,28 @@
             <version>0.16.1</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>RELEASE</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.arangodb</groupId>
+            <artifactId>arangodb-java-driver</artifactId>
+            <version>6.16.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.arangodb</groupId>
+            <artifactId>jackson-dataformat-velocypack</artifactId>
+            <version>3.0.0</version>
+        </dependency>
     </dependencies>
 
     <properties>
