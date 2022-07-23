@@ -21,16 +21,19 @@ public class Generator {
     private Map<String, BitcoinTxNode> transactionNodes;
     private Map<String, BitcoinParentBlockEdge> blockEdges;
     private BitcoinBlockNode blockNode;
-    private long minDepositAmount = 0;
-    private long maxDepositAmount = Long.MAX_VALUE;
-    private int minCommission = 1;
-    private int maxCommission = 30;
+    private long minDepositAmount = 0; // todo: set from config
+    private long maxDepositAmount = Long.MAX_VALUE; // todo: set from config
+    private int minCommission = 1; // todo: set from config
+    private int maxCommission = 30; // todo: set from config
     private final ZoneId zoneId = ZoneId.systemDefault();
     private final Random random = new Random();
-    private int maxOutputsAmount = 5; // todo: needs to be set by user. or make generation process with config only
+    private int maxOutputsAmount = 5; // todo: set from config
     private ArrayList<BitcoinTxNode> currentLayerTxs = new ArrayList<>();
     private ArrayList<BitcoinTxNode> prevLayerTxs = new ArrayList<>();
-
+    private long btcAmount = 290000000; // todo: set from config
+    private int commission = 10; // todo: set from config
+    private Duration preferredDelay = Duration.ofHours(24); // todo: set hours amount from config
+    private int supportTransactionsAmount = 3; // todo: set transactions amount from config
     public Generator() {
         this.blockNode = null;
         this.inOutEdges = new HashMap<>();
@@ -105,8 +108,6 @@ public class Generator {
         System.out.println(output2);
     }
 
-    public void generateCoinJoin() {}
-
     private Deque<Long> expandBtcToPowersOfTwo(long toMixBtcAmount, int commission) {
         Deque<Long> values = new ArrayDeque<>();
         long value = toMixBtcAmount;
@@ -118,30 +119,32 @@ public class Generator {
             value /= 2;
         }
 
-        long comissionValue = toMixBtcAmount / 100L * commission;
+        long commissionValue = toMixBtcAmount / 100L * commission;
 
         return values;
     }
 
-    private ArrayList<Pair<BitcoinAddressNode, BitcoinOutputEdge>> generateRandomClusterWithdraws(int i, BitcoinTxNode transaction)
-            throws InvalidAlgorithmParameterException, UnsupportedEncodingException, NoSuchAlgorithmException, NoSuchProviderException {
+    private ArrayList<Pair<BitcoinAddressNode, BitcoinOutputEdge>> generateRandomClusterWithdraws(int i, BitcoinTxNode transaction) {
         ArrayList<Pair<BitcoinAddressNode, BitcoinOutputEdge>> withdrawData = new ArrayList<>();
         int amount = random.nextInt(1, maxOutputsAmount);
         System.out.println("withdraw addresses: " + amount);
+        long btcToSpend = btcAmount / 2;
         for (int j = 1; j <= amount; ++j) {
             BitcoinAddressNode withdrawAddress_i = new BitcoinAddressNode("withdraw_btc_address_" + j + "_" + i, j, Utils.generateBtcAddress());
+
             BitcoinOutputEdge output_i = new BitcoinOutputEdge(transaction.get_key() + "_output_" + j,
                     btcTx + transaction.get_key(),
                     btcAddress + withdrawAddress_i.get_key(),
-                    0,
-                    null,
+                    j,
+                    btcToSpend / amount,
                     getLocalTime());
+
             withdrawData.add(new Pair<>(withdrawAddress_i, output_i));
         }
         return withdrawData;
     }
 
-    private BitcoinAddressNode generateCluster(int i, BitcoinAddressNode fromAddress) throws InvalidAlgorithmParameterException, UnsupportedEncodingException, NoSuchAlgorithmException, NoSuchProviderException {
+    private BitcoinAddressNode generateCluster(int i, BitcoinAddressNode fromAddress) {
         BitcoinAddressNode toAddress = new BitcoinAddressNode("support_btc_address_" + i, 0, Utils.generateBtcAddress());
 
         BitcoinTxNode transaction = new BitcoinTxNode("tx_" + fromAddress.get_key() + "_TO_" + toAddress.get_key(), getLocalTime());
@@ -149,112 +152,33 @@ public class Generator {
                 btcAddress + fromAddress.get_key(),
                 btcTx + transaction.get_key(),
                 0,
-                null,
+                btcAmount,
                 getLocalTime());
-        BitcoinOutputEdge output0 = new BitcoinOutputEdge(transaction.get_key() + "_output_0",
-                btcTx + transaction.get_key(),
-                btcAddress + toAddress.get_key(),
-                0,
-                null,
-                getLocalTime());
-
 
         addressNodes.put(fromAddress.get_key(), fromAddress);
         addressNodes.put(toAddress.get_key(), toAddress);
         transactionNodes.put(transaction.get_key(), transaction);
         inOutEdges.put(input0.get_key(), input0);
-        inOutEdges.put(output0.get_key(), output0);
 
         generateRandomClusterWithdraws(i, transaction).forEach(pair -> {
             addressNodes.put(pair.left.get_key(), pair.left);
             inOutEdges.put(pair.right.get_key(), pair.right);
         });
 
+        BitcoinOutputEdge output0 = new BitcoinOutputEdge(transaction.get_key() + "_output_0",
+                btcTx + transaction.get_key(),
+                btcAddress + toAddress.get_key(),
+                0,
+                btcAmount / 2,
+                getLocalTime());
+        inOutEdges.put(output0.get_key(), output0);
+        btcAmount /= 2;
+
         currentLayerTxs.add(transaction);
         return toAddress;
     }
 
-    private void setBtcValues() {
-
-    }
-
-    public void generateDefaultCentralized(long toMixBtcAmount, int commission, Duration preferredDelay) {
-        if ((minDepositAmount <= toMixBtcAmount && toMixBtcAmount <= maxDepositAmount)
-                && (minCommission <= commission && commission <= maxCommission)) {
-            // Deque<Long> expandedToMixBtc = expandBtcToPowersOfTwo(toMixBtcAmount, commission);
-            // expandedToMixBtc.forEach(System.out::println);
-            ArrayList<BitcoinAddressNode> enterSupportNodes = new ArrayList<>();
-            int supportNodesAmount = 10; // per layer
-            int layersAmount = 1;
-            for (int layer = 0; layer < layersAmount; ++layer) {
-                ArrayList<BitcoinAddressNode> currentSupportAddresses = new ArrayList<>();
-                BitcoinAddressNode fromAddress;
-                try {
-                    fromAddress = new BitcoinAddressNode("support_btc_address_0", 0, Utils.generateBtcAddress());
-                    enterSupportNodes.add(fromAddress);
-                    currentSupportAddresses.add(fromAddress);
-                } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | UnsupportedEncodingException |
-                         NoSuchProviderException e) {
-                    throw new RuntimeException(e);
-                }
-                prevLayerTxs.clear();
-                prevLayerTxs.addAll(currentLayerTxs);
-                currentLayerTxs.clear();
-                for (int i = 1; i <= supportNodesAmount; ++i) {
-                    try {
-                        fromAddress = generateCluster(i, fromAddress);
-                        currentSupportAddresses.add(fromAddress);
-                    } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException |
-                             UnsupportedEncodingException | NoSuchProviderException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                if (prevLayerTxs.isEmpty()) continue;
-                for (int i = 1; i < currentSupportAddresses.size(); ++i) {
-                    BitcoinOutputEdge connectingInput = new BitcoinOutputEdge(
-                            prevLayerTxs.get(i - 1).get_key() + "_1",
-                            btcAddress + currentSupportAddresses.get(i),
-                            btcTx + prevLayerTxs.get(i - 1).get_key(),
-                            1,
-                            null,
-                            getLocalTime()
-                    );
-                    inOutEdges.put(connectingInput.get_key(), connectingInput);
-                }
-
-                supportNodesAmount /= 2;
-            }
-
-            try {
-                BitcoinAddressNode startNode = new BitcoinAddressNode(null, 0, Utils.generateBtcAddress());
-                BitcoinTxNode startTx = new BitcoinTxNode("start_tx_from_" + startNode.get_key(), getLocalTime());
-                BitcoinOutputEdge startInput = new BitcoinOutputEdge(
-                        startTx.get_key() + "_0",
-                        btcAddress + startNode.get_key(),
-                        btcTx + startTx.get_key(),
-                        0,
-                        null,
-                        getLocalTime());
-                addressNodes.put(startNode.get_key(), startNode);
-                transactionNodes.put(startTx.get_key(), startTx);
-                inOutEdges.put(startInput.get_key(), startInput);
-                for (int j = 0; j < enterSupportNodes.size(); ++j) {
-                    BitcoinOutputEdge outputEdge = new BitcoinOutputEdge(
-                            startTx.get_key() + "_0",
-                            btcTx + startTx.get_key(),
-                            btcAddress + enterSupportNodes.get(j).get_key(),
-                            j,
-                            null,
-                            getLocalTime()
-                    );
-                    inOutEdges.put(outputEdge.get_key(), outputEdge);
-                }
-            } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | UnsupportedEncodingException |
-                     NoSuchProviderException e) {
-                throw new RuntimeException(e);
-            }
-        } else throw new IllegalArgumentException();
-
+    private void generateBlockNodeAndBlockEdges() {
         blockNode = new BitcoinBlockNode(
                 Utils.generateRandomHash(6),
                 random.nextInt(1, Integer.MAX_VALUE)
@@ -264,14 +188,85 @@ public class Generator {
         for (var entry : transactionNodes.entrySet()) {
             BitcoinParentBlockEdge bpbe = new BitcoinParentBlockEdge(
                     "block_edge_" + i,
-                    "btcTx/" + entry.getValue().get_key(),
-                    "btcBlock/" + blockNode.getBlockHeight().toString()
+                    btcTx + entry.getValue().get_key(),
+                    btcBlock + blockNode.getBlockHeight().toString()
             );
 
             blockEdges.put(bpbe.get_key(), bpbe);
 
             i++;
         }
+    }
+
+    private void generateStartCluster(ArrayList<BitcoinAddressNode> enterSupportNodes, long btcAmount, int commission) {
+        BitcoinAddressNode startNode = new BitcoinAddressNode(null, 0, Utils.generateBtcAddress());
+        BitcoinTxNode startTx = new BitcoinTxNode("start_tx_from_" + startNode.get_key(), getLocalTime());
+        BitcoinOutputEdge startInput = new BitcoinOutputEdge(
+                startTx.get_key() + "_input_0",
+                btcAddress + startNode.get_key(),
+                btcTx + startTx.get_key(),
+                0,
+                btcAmount,
+                getLocalTime());
+        addressNodes.put(startNode.get_key(), startNode);
+        transactionNodes.put(startTx.get_key(), startTx);
+        inOutEdges.put(startInput.get_key(), startInput);
+        long spent = btcAmount - (btcAmount / 100 * commission);
+        for (int j = 0; j < enterSupportNodes.size(); ++j) {
+            BitcoinOutputEdge outputEdge = new BitcoinOutputEdge(
+                    startTx.get_key() + "_output_0",
+                    btcTx + startTx.get_key(),
+                    btcAddress + enterSupportNodes.get(j).get_key(),
+                    j,
+                    spent / enterSupportNodes.size(),
+                    getLocalTime()
+            );
+            inOutEdges.put(outputEdge.get_key(), outputEdge);
+        }
+    }
+
+    public void generateDefaultCentralized() {
+        long toMixBtcAmount = btcAmount;
+        if ((toMixBtcAmount < minDepositAmount) ||
+                (toMixBtcAmount > maxDepositAmount) ||
+                (commission < minCommission) ||
+                (commission > maxCommission)) {
+            throw new IllegalArgumentException();
+        }
+
+        ArrayList<BitcoinAddressNode> enterSupportNodes = new ArrayList<>();
+        int layersAmount = 1;
+        btcAmount = toMixBtcAmount - (toMixBtcAmount / 100 * commission);
+        for (int layer = 0; layer < layersAmount; ++layer) {
+            ArrayList<BitcoinAddressNode> currentSupportAddresses = new ArrayList<>();
+            BitcoinAddressNode fromAddress;
+            fromAddress = new BitcoinAddressNode("support_btc_address_0", 0, Utils.generateBtcAddress());
+            enterSupportNodes.add(fromAddress);
+            currentSupportAddresses.add(fromAddress);
+            prevLayerTxs.clear();
+            prevLayerTxs.addAll(currentLayerTxs);
+            currentLayerTxs.clear();
+            for (int i = 1; i <= supportTransactionsAmount; ++i) {
+                fromAddress = generateCluster(i, fromAddress);
+                currentSupportAddresses.add(fromAddress);
+            }
+//            if (prevLayerTxs.isEmpty()) continue;
+//            for (int i = 1; i < currentSupportAddresses.size(); ++i) {
+//                BitcoinOutputEdge connectingInput = new BitcoinOutputEdge(
+//                        prevLayerTxs.get(i - 1).get_key() + "_1",
+//                        btcAddress + currentSupportAddresses.get(i),
+//                        btcTx + prevLayerTxs.get(i - 1).get_key(),
+//                        1,
+//                        null,
+//                        getLocalTime()
+//                );
+//                inOutEdges.put(connectingInput.get_key(), connectingInput);
+//            }
+        }
+        generateStartCluster(enterSupportNodes, toMixBtcAmount, commission);
+
+
+        generateBlockNodeAndBlockEdges();
     }
 
     private <K, V> void writeDownHashMapData(Map<K, V> data, String folder) {

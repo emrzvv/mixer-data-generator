@@ -74,13 +74,14 @@ public class ArangoApi {
      * @param docs
      * @return true if insert was successful, false - if it failed (fail can also happen if docs are already in collection - see exception in logs)
      */
-    public boolean importDocsIfNotExistToCollection(String collectionName, List<Object> docs) {
+    public boolean importDocsIfNotExistToCollection(String collectionName, List<Object> docs, Boolean truncate) {
         docs.forEach(System.out::println);
         if (docs.size() == 0) {
             log.warning(String.format("try insert empty list to collection %s, will not insert anything", collectionName));
             return true;
         }
         try {
+            if (truncate) arangoDatabase.collection(collectionName).truncate();
             arangoDatabase.collection(collectionName).importDocuments(docs, optionswithIgnoreDublicate);
             return true;
         } catch (ArangoDBException e) {

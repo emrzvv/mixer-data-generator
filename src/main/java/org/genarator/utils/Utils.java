@@ -15,6 +15,7 @@ public class Utils {
     public static class ArangoPrefix {
         public static final String btcAddress = "btcAddress/";
         public static final String btcTx = "btcTx/";
+        public static final String btcBlock = "btcBlock/";
     }
 
 
@@ -48,12 +49,20 @@ public class Utils {
         return sb.toString();
     }
 
-    public static String generateBtcAddress()
-            throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, UnsupportedEncodingException, NoSuchProviderException {
+    public static String generateBtcAddress() {
         java.security.Security.addProvider(new BouncyCastleProvider());
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", "BC");
+        KeyPairGenerator keyGen = null;
+        try {
+            keyGen = KeyPairGenerator.getInstance("EC", "BC");
+        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+            throw new RuntimeException(e);
+        }
         ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256k1");
-        keyGen.initialize(ecSpec);
+        try {
+            keyGen.initialize(ecSpec);
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new RuntimeException(e);
+        }
         KeyPair kp = keyGen.generateKeyPair();
         PublicKey pub = kp.getPublic();
         PrivateKey pvt = kp.getPrivate();
@@ -66,10 +75,25 @@ public class Utils {
         String sy = adjustTo64(pt.getAffineY().toString(16)).toUpperCase();
         String bcPub = "04" + sx + sy;
         // System.out.println("bcPub: " + bcPub);
-        MessageDigest sha = MessageDigest.getInstance("SHA-256");
-        byte[] s1 = sha.digest(bcPub.getBytes("UTF-8"));
+        MessageDigest sha = null;
+        try {
+            sha = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        byte[] s1 = new byte[0];
+        try {
+            s1 = sha.digest(bcPub.getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
         //System.out.println("  sha: " + bytesToHex(s1).toUpperCase());
-        MessageDigest rmd = MessageDigest.getInstance("RipeMD160", "BC");
+        MessageDigest rmd = null;
+        try {
+            rmd = MessageDigest.getInstance("RipeMD160", "BC");
+        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+            throw new RuntimeException(e);
+        }
         byte[] r1 = rmd.digest(s1);
         byte[] r2 = new byte[r1.length + 1];
         r2[0] = 0;
