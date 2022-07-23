@@ -32,8 +32,9 @@ public class Generator {
     private ArrayList<BitcoinTxNode> prevLayerTxs = new ArrayList<>();
     private long btcAmount = 290000000; // todo: set from config
     private int commission = 10; // todo: set from config
-    private Duration preferredDelay = Duration.ofHours(24); // todo: set hours amount from config
-    private int supportTransactionsAmount = 3; // todo: set transactions amount from config
+    private int preferredHoursDelay = 48; // todo: set hours amount from config
+    private int supportTransactionsAmount = 10; // todo: set transactions amount from config
+    private long currentTime = getLocalTime();
     public Generator() {
         this.blockNode = null;
         this.inOutEdges = new HashMap<>();
@@ -76,38 +77,6 @@ public class Generator {
         return LocalDateTime.now().atZone(zoneId).toEpochSecond();
     }
 
-
-    private String generateBtcAddress() {
-        return "btc_address_" + (random.nextLong() & 0xffffffffL);
-    }
-
-
-    public void generateSimpleExample() {
-        BitcoinTxNode tx1 = new BitcoinTxNode("tx_1_key", getLocalTime());
-        BitcoinTxNode tx2 = new BitcoinTxNode("tx_2_key", getLocalTime());
-        BitcoinTxNode tx3 = new BitcoinTxNode("tx_3_key", getLocalTime());
-
-        // txId???
-        BitcoinAddressNode addressNode1 = new BitcoinAddressNode(tx1.get_key(), 1, generateBtcAddress());
-        BitcoinAddressNode addressNode2 = new BitcoinAddressNode(tx2.get_key(), 2, generateBtcAddress());
-        BitcoinAddressNode addressNode3 = new BitcoinAddressNode(tx3.get_key(), 3, generateBtcAddress());
-
-        BitcoinOutputEdge input1 = new BitcoinOutputEdge("input_key_1_" + tx1.get_key(), "btcAddress/" + addressNode1.get_key(), "btcTx/" + tx1.get_key(), 1, 12345L, getLocalTime());
-        BitcoinOutputEdge input2 = new BitcoinOutputEdge("input_key_2_" + tx2.get_key(), "btcAddress/" + addressNode2.get_key(), "btcTx/" + tx2.get_key(), 1, 54321L, getLocalTime());
-
-        BitcoinOutputEdge output1 = new BitcoinOutputEdge("output_key_1_" + tx1.get_key() + "_0", "btcTx/" + tx1.get_key(), "btcAddress/" + addressNode3.get_key(), 1, 20000L, getLocalTime());
-        BitcoinOutputEdge output2 = new BitcoinOutputEdge("output_key_2_" + tx2.get_key() + "_0", "btcTx/" + tx1.get_key(), "btcAddress/" + addressNode3.get_key(), 1, 20000L, getLocalTime());
-
-        System.out.println(tx1.toString());
-        System.out.println(addressNode1.toString());
-        System.out.println(addressNode2.toString());
-        System.out.println(addressNode3.toString());
-        System.out.println(input1);
-        System.out.println(input2);
-        System.out.println(output1);
-        System.out.println(output2);
-    }
-
     private Deque<Long> expandBtcToPowersOfTwo(long toMixBtcAmount, int commission) {
         Deque<Long> values = new ArrayDeque<>();
         long value = toMixBtcAmount;
@@ -144,16 +113,31 @@ public class Generator {
         return withdrawData;
     }
 
+    private void performDelay(int i) {
+        if (preferredHoursDelay <= 1) return;
+        if (i == supportTransactionsAmount) {
+            currentTime += Duration.ofHours(preferredHoursDelay).toSeconds();
+        }
+        else {
+            int hours = random.nextInt(1, preferredHoursDelay);
+            preferredHoursDelay -= hours;
+            currentTime += Duration.ofHours(hours).toSeconds();
+            System.out.println("CURRENT DELAY: " + hours + "h");
+        }
+    }
+
     private BitcoinAddressNode generateCluster(int i, BitcoinAddressNode fromAddress) {
         BitcoinAddressNode toAddress = new BitcoinAddressNode("support_btc_address_" + i, 0, Utils.generateBtcAddress());
 
-        BitcoinTxNode transaction = new BitcoinTxNode("tx_" + fromAddress.get_key() + "_TO_" + toAddress.get_key(), getLocalTime());
+        performDelay(i);
+
+        BitcoinTxNode transaction = new BitcoinTxNode("tx_" + fromAddress.get_key() + "_TO_" + toAddress.get_key(), currentTime);
         BitcoinOutputEdge input0 = new BitcoinOutputEdge(transaction.get_key() + "_input_0",
                 btcAddress + fromAddress.get_key(),
                 btcTx + transaction.get_key(),
                 0,
                 btcAmount,
-                getLocalTime());
+                currentTime);
 
         addressNodes.put(fromAddress.get_key(), fromAddress);
         addressNodes.put(toAddress.get_key(), toAddress);
@@ -170,7 +154,7 @@ public class Generator {
                 btcAddress + toAddress.get_key(),
                 0,
                 btcAmount / 2,
-                getLocalTime());
+                currentTime);
         inOutEdges.put(output0.get_key(), output0);
         btcAmount /= 2;
 

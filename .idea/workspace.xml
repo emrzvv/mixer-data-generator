@@ -6,10 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="5248a2d4-4e3f-472b-8847-d9fad07c46fc" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/genarator/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/genarator/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/genarator/arango/ArangoApi.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/genarator/arango/ArangoApi.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/genarator/generator/Generator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/genarator/generator/Generator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/genarator/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/genarator/utils/Utils.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -85,7 +82,7 @@
       <workItem from="1658177016572" duration="13841000" />
       <workItem from="1658223393769" duration="4994000" />
       <workItem from="1658412039985" duration="2743000" />
-      <workItem from="1658497166756" duration="23830000" />
+      <workItem from="1658497166756" duration="25981000" />
     </task>
     <servers />
   </component>
