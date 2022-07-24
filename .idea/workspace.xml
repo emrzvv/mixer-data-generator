@@ -5,7 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5248a2d4-4e3f-472b-8847-d9fad07c46fc" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/resources/application.conf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/genarator/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/genarator/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/genarator/config/ConfigProperties.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/genarator/config/ConfigProperties.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/genarator/generator/Generator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/genarator/generator/Generator.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -82,12 +86,15 @@
       <workItem from="1658177016572" duration="13841000" />
       <workItem from="1658223393769" duration="4994000" />
       <workItem from="1658412039985" duration="2743000" />
-      <workItem from="1658497166756" duration="25981000" />
+      <workItem from="1658497166756" duration="28771000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="*.conf" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">

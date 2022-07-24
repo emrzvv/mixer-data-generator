@@ -34,20 +34,10 @@ public class Main {
 
 
     public static void main(String[] args) {
-        Generator generator = new Generator();
+        ConfigProperties configProperties = new ConfigProperties();
+        Generator generator = new Generator(configProperties);
         generator.generateDefaultCentralized();
         //generator.writeAll();
-
-        String prodHosts = "127.0.0.1:8529";
-        String prodUser = "root";
-        String prodPassword = "root";
-        String prodDbName = "testDb";
-        ConfigProperties configProperties = new ConfigProperties(
-                prodHosts,
-                prodUser,
-                prodPassword,
-                prodDbName
-        );
         Logger log = Logger.getLogger(Main.class.getName());
 
         importGraphNodesAndEdges(log, configProperties, generator);

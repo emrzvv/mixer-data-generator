@@ -1,5 +1,6 @@
 package org.genarator.generator;
 
+import org.genarator.config.ConfigProperties;
 import org.genarator.models.*;
 import org.genarator.utils.Utils;
 import org.genarator.utils.Pair;
@@ -16,31 +17,42 @@ import java.util.*;
 
 public class Generator {
     // _key -> graph dao
+    private ConfigProperties config;
     private Map<String, BitcoinOutputEdge> inOutEdges;
     private Map<String, BitcoinAddressNode> addressNodes;
     private Map<String, BitcoinTxNode> transactionNodes;
     private Map<String, BitcoinParentBlockEdge> blockEdges;
     private BitcoinBlockNode blockNode;
-    private long minDepositAmount = 0; // todo: set from config
-    private long maxDepositAmount = Long.MAX_VALUE; // todo: set from config
-    private int minCommission = 1; // todo: set from config
-    private int maxCommission = 30; // todo: set from config
+    private long minDepositAmount;
+    private long maxDepositAmount;
+    private int minCommission;
+    private int maxCommission;
     private final ZoneId zoneId = ZoneId.systemDefault();
     private final Random random = new Random();
-    private int maxOutputsAmount = 5; // todo: set from config
+    private int maxOutputsAmount;
     private ArrayList<BitcoinTxNode> currentLayerTxs = new ArrayList<>();
     private ArrayList<BitcoinTxNode> prevLayerTxs = new ArrayList<>();
-    private long btcAmount = 290000000; // todo: set from config
-    private int commission = 10; // todo: set from config
-    private int preferredHoursDelay = 48; // todo: set hours amount from config
-    private int supportTransactionsAmount = 10; // todo: set transactions amount from config
+    private long btcAmount;
+    private int commission;
+    private int preferredHoursDelay;
+    private int supportTransactionsAmount;
     private long currentTime = getLocalTime();
-    public Generator() {
+    public Generator(ConfigProperties config) {
         this.blockNode = null;
         this.inOutEdges = new HashMap<>();
         this.addressNodes = new HashMap<>();
         this.transactionNodes = new HashMap<>();
         this.blockEdges = new HashMap<>();
+        this.config = config;
+        this.btcAmount = config.getBtcAmount();
+        this.minDepositAmount = config.getMinDepositAmount();
+        this.maxDepositAmount = config.getMaxDepositAmount();
+        this.minCommission = config.getMinCommission();
+        this.maxCommission = config.getMaxCommission();
+        this.maxOutputsAmount = config.getMaxOutputsAmount();
+        this.commission = config.getCommission();
+        this.preferredHoursDelay = config.getPreferredHoursDelay();
+        this.supportTransactionsAmount = config.getSupportTransactionsAmount();
     }
 
     public Generator(Map<String, BitcoinOutputEdge> inOutEdges,
