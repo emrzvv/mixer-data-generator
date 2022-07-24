@@ -118,7 +118,7 @@ public class Generator {
                     btcAddress + withdrawAddress_i.get_key(),
                     j,
                     btcToSpend / amount,
-                    getLocalTime());
+                    currentTime);
 
             withdrawData.add(new Pair<>(withdrawAddress_i, output_i));
         }
@@ -126,7 +126,9 @@ public class Generator {
     }
 
     private void performDelay(int i) {
-        if (preferredHoursDelay <= 1) return;
+        if (preferredHoursDelay <= 1) {
+            currentTime += Duration.ofHours(1).toSeconds();
+        };
         if (i == supportTransactionsAmount) {
             currentTime += Duration.ofHours(preferredHoursDelay).toSeconds();
         }
