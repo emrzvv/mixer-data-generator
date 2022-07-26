@@ -133,7 +133,7 @@ public class Generator {
             currentTime += Duration.ofHours(preferredHoursDelay).toSeconds();
         }
         else {
-            int hours = random.nextInt(1, preferredHoursDelay);
+            int hours = random.nextInt(1, Math.max(preferredHoursDelay, 2));
             preferredHoursDelay -= hours;
             currentTime += Duration.ofHours(hours).toSeconds();
             System.out.println("CURRENT DELAY: " + hours + "h");
