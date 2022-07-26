@@ -263,7 +263,6 @@ public class Generator {
         }
         generateStartCluster(enterSupportNodes, toMixBtcAmount, commission);
 
-
         generateBlockNodeAndBlockEdges();
     }
 

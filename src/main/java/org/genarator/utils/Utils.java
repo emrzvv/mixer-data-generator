@@ -18,8 +18,6 @@ public class Utils {
         public static final String btcBlock = "btcBlock/";
     }
 
-
-
     private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
     static private String adjustTo64(String s) {
         return switch (s.length()) {
